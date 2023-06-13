@@ -4,7 +4,7 @@
   <div id="arrangement_area" class="bg-gray-300 h-20 flex flex-row">
     <div v-for="(chord, i) in progression">
       <select v-model="progression[i]">
-        <option v-for="option in Object.keys(possibleChords)">
+        <option v-for="option in Object.keys(possibleChords)" :value="{label: option, notes: possibleChords[option]}">
           {{ option }}
   </option></select>
     </div>
@@ -14,7 +14,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
+import usesLocalStorage from '../composables/useLocalStorage'
 import * as Tone from 'tone'
 
 const synth = new Tone.PolySynth(Tone.Synth).toDestination();
@@ -32,8 +33,11 @@ function play() {
   
   Tone.Transport.schedule((time) => {
 	  for(let i = 0; i < progression.value.length; i++) {
-      let chord = progression.value[i];
-      synth.triggerAttackRelease(possibleChords.value[chord], "1m", Tone.now() + Tone.Transport.toSeconds(i+"m"))
+      let chord = progression.value[i].notes;
+      synth.triggerAttackRelease(
+        chord,
+        "1m", 
+        Tone.now() + Tone.Transport.toSeconds(i+"m"))
     }
 	  console.log("measure 16!");
     Tone.Transport.stop();
@@ -41,11 +45,11 @@ function play() {
 }
 
 function addChord() {
-  progression.value.push("C")
-
+  progression.value.push({label: "C", notes: possibleChords.value["C"]})
 }
 
-const progression = ref([])
+const progression = usesLocalStorage("tone-progression", [])
+
 const possibleChords = ref({
   C: ["C4", "E4", "G4"], 
   D: ["D4", "F#4", "A4"],
