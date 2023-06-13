@@ -14,18 +14,30 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import * as Tone from 'tone'
 
 const synth = new Tone.PolySynth(Tone.Synth).toDestination();
 
+let started = false;
+
 //play a middle 'C' for the duration of an 8th note
 function play() {
-  Tone.start();
-  for(let i = 0; i < progression.value.length; i++) {
-    let chord = progression.value[i];
-    synth.triggerAttackRelease(possibleChords.value[chord], "1m", i+"m")
+  if(!started){
+    Tone.start();
+    started = true
   }
+
+  Tone.Transport.start(Tone.now());
+  
+  Tone.Transport.schedule((time) => {
+	  for(let i = 0; i < progression.value.length; i++) {
+      let chord = progression.value[i];
+      synth.triggerAttackRelease(possibleChords.value[chord], "1m", Tone.now() + Tone.Transport.toSeconds(i+"m"))
+    }
+	  console.log("measure 16!");
+    Tone.Transport.stop();
+  }, Tone.now());
 }
 
 function addChord() {
