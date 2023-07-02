@@ -2,20 +2,24 @@
 
 <template>
   <div id="arrangement_area" class="bg-gray-300 h-20 flex flex-row">
-    <div v-for="(chord, i) in progression">
+    <div v-for="(chord, i) in progression" class="h-5/6 bg-blue-300 rounded m-1 p-1"
+    :class="{'bg-blue-600': transportTime > chord.playTime.start && transportTime < chord.playTime.end}">
       <select v-model="progression[i]">
-        <option v-for="option in Object.keys(possibleChords)" :value="{label: option, notes: possibleChords[option]}">
+        <option 
+        v-for="option in Object.keys(possibleChords)" 
+        :value="{label: option, notes: possibleChords[option], playTime:{start:0, end:0}}">
           {{ option }}
   </option></select>
     </div>
     <button @click="addChord">+</button>
   </div>
   <button @click="play">TEST PLAY</button>
+  {{ transportTime }}
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import usesLocalStorage from '../composables/useLocalStorage'
+import useLocalStorage from '../composables/useLocalStorage'
 import * as Tone from 'tone'
 
 const synth = new Tone.PolySynth(Tone.Synth).toDestination();
@@ -33,22 +37,32 @@ function play() {
   
   Tone.Transport.schedule((time) => {
 	  for(let i = 0; i < progression.value.length; i++) {
+      progression.value[i].playTime.start = Tone.now() + Tone.Transport.toSeconds(i+"m")
+      progression.value[i].playTime.end = progression.value[i].playTime.start + Tone.Transport.toSeconds("1m")
+      
       let chord = progression.value[i].notes;
       synth.triggerAttackRelease(
         chord,
         "1m", 
         Tone.now() + Tone.Transport.toSeconds(i+"m"))
     }
-	  console.log("measure 16!");
     Tone.Transport.stop();
   }, Tone.now());
 }
 
 function addChord() {
-  progression.value.push({label: "C", notes: possibleChords.value["C"]})
+  progression.value.push({label: "C", 
+  notes: possibleChords.value["C"], 
+  playTime:{start:0, end:0}})
 }
 
-const progression = usesLocalStorage("tone-progression", [])
+const progression = useLocalStorage("tone-progression", [])
+
+const transportTime = ref(0)
+
+setInterval(() => {
+	transportTime.value = Tone.now();
+}, 100);
 
 const possibleChords = ref({
   C: ["C4", "E4", "G4"], 
