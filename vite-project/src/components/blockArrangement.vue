@@ -4,10 +4,9 @@
   <div id="arrangement_area" class="bg-gray-300 h-20 flex flex-row">
     <div v-for="(chord, i) in progression" class="h-5/6 bg-blue-300 rounded m-1 p-1"
     :class="{'bg-blue-600': transportTime > chord.playTime.start && transportTime < chord.playTime.end}">
-      <select v-model="progression[i]">
+      <select v-model="progression[i].label" @change="progression[i].notes = possibleChords[$event.target.value]">
         <option 
-        v-for="option in Object.keys(possibleChords)" 
-        :value="{label: option, notes: possibleChords[option], playTime:{start:0, end:0}}">
+        v-for="option in Object.keys(possibleChords)">
           {{ option }}
   </option></select>
     </div>
